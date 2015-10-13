@@ -38,7 +38,7 @@ class User(model.Base):
 
   @classmethod
   def get_dbs(
-          cls, admin=None, active=None, verified=None, permissions=None, **kwargs
+    cls, admin=None, active=None, verified=None, permissions=None, **kwargs
   ):
     return super(User, cls).get_dbs(
       admin=admin or util.param('admin', bool),
