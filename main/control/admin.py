@@ -1,7 +1,7 @@
 # coding: utf-8
 
-from flask.ext import wtf
 import flask
+import flask_wtf
 import wtforms
 
 import auth
@@ -18,17 +18,27 @@ from main import app
 @app.route('/admin/')
 @auth.admin_required
 def admin():
+  localhost = None
+  if config.DEVELOPMENT and ':' in flask.request.host:
+    try:
+      parts = flask.request.host.split(':')
+      port = int(parts[1]) + 1
+      localhost = 'http://%s:%s/' % (parts[0], port)
+    except:
+      pass
+
   return flask.render_template(
-      'admin/admin.html',
-      title='Admin',
-      html_class='admin',
-    )
+    'admin/admin.html',
+    title='Admin',
+    html_class='admin',
+    localhost=localhost,
+  )
 
 
 ###############################################################################
 # Config Stuff
 ###############################################################################
-class ConfigUpdateForm(wtf.Form):
+class ConfigUpdateForm(flask_wtf.Form):
   analytics_id = wtforms.StringField(model.Config.analytics_id._verbose_name, filters=[util.strip_filter])
   announcement_html = wtforms.TextAreaField(model.Config.announcement_html._verbose_name, filters=[util.strip_filter])
   announcement_type = wtforms.SelectField(model.Config.announcement_type._verbose_name, choices=[(t, t.title()) for t in model.Config.announcement_type._choices])
@@ -38,6 +48,8 @@ class ConfigUpdateForm(wtf.Form):
   email_authentication = wtforms.BooleanField(model.Config.email_authentication._verbose_name)
   feedback_email = wtforms.StringField(model.Config.feedback_email._verbose_name, [wtforms.validators.optional(), wtforms.validators.email()], filters=[util.email_filter])
   flask_secret_key = wtforms.StringField(model.Config.flask_secret_key._verbose_name, [wtforms.validators.optional()], filters=[util.strip_filter])
+  letsencrypt_challenge = wtforms.StringField(model.Config.letsencrypt_challenge._verbose_name, filters=[util.strip_filter])
+  letsencrypt_response = wtforms.StringField(model.Config.letsencrypt_response._verbose_name, filters=[util.strip_filter])
   notify_on_new_user = wtforms.BooleanField(model.Config.notify_on_new_user._verbose_name)
   recaptcha_private_key = wtforms.StringField(model.Config.recaptcha_private_key._verbose_name, filters=[util.strip_filter])
   recaptcha_public_key = wtforms.StringField(model.Config.recaptcha_public_key._verbose_name, filters=[util.strip_filter])
@@ -62,18 +74,18 @@ def admin_config():
     return flask.redirect(flask.url_for('admin'))
 
   return flask.render_template(
-      'admin/admin_config.html',
-      title='App Config',
-      html_class='admin-config',
-      form=form,
-      api_url=flask.url_for('api.config'),
-    )
+    'admin/admin_config.html',
+    title='App Config',
+    html_class='admin-config',
+    form=form,
+    api_url=flask.url_for('api.admin.config'),
+  )
 
 
 ###############################################################################
 # Auth Stuff
 ###############################################################################
-class AuthUpdateForm(wtf.Form):
+class AuthUpdateForm(flask_wtf.Form):
   bitbucket_key = wtforms.StringField(model.Config.bitbucket_key._verbose_name, filters=[util.strip_filter])
   bitbucket_secret = wtforms.StringField(model.Config.bitbucket_secret._verbose_name, filters=[util.strip_filter])
   dropbox_app_key = wtforms.StringField(model.Config.dropbox_app_key._verbose_name, filters=[util.strip_filter])
@@ -113,9 +125,9 @@ def admin_auth():
     return flask.redirect(flask.url_for('admin'))
 
   return flask.render_template(
-      'admin/admin_auth.html',
-      title='Auth Config',
-      html_class='admin-auth',
-      form=form,
-      api_url=flask.url_for('api.config'),
-    )
+    'admin/admin_auth.html',
+    title='Auth Config',
+    html_class='admin-auth',
+    form=form,
+    api_url=flask.url_for('api.admin.config'),
+  )
